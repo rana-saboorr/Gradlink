@@ -1,0 +1,30 @@
+[
+  {
+    "id": "uk",
+    "name": "United Kingdom",
+    "description": "Home to some of the world's oldest and most prestigious universities.",
+    "image": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
+    "universitiesCount": 45
+  },
+  {
+    "id": "usa",
+    "name": "United States",
+    "description": "The top destination for international students offering diverse programs.",
+    "image": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
+    "universitiesCount": 120
+  },
+  {
+    "id": "canada",
+    "name": "Canada",
+    "description": "Known for its welcoming culture and high quality of life.",
+    "image": "https://images.unsplash.com/photo-1517935706615-2717063c2225?w=800&q=80",
+    "universitiesCount": 35
+  },
+  {
+    "id": "australia",
+    "name": "Australia",
+    "description": "Excellent education system with a fantastic lifestyle.",
+    "image": "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=800&q=80",
+    "universitiesCount": 28
+  }
+]
