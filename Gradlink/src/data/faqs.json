@@ -1,18 +1,82 @@
 [
   {
     "question": "What services does Gradlink provide?",
-    "answer": "We provide comprehensive educational consulting, including university selection, application assistance, visa guidance, and career counseling."
+    "answer": "We provide comprehensive educational consulting, including university selection, application assistance, visa guidance, scholarship support, career counseling, and pre-departure assistance."
   },
   {
     "question": "Do you guarantee admission to universities?",
-    "answer": "While we cannot guarantee admission as the final decision rests with the universities, our expert guidance significantly improves your chances of acceptance."
+    "answer": "No. Admission decisions are made solely by universities. We help strengthen your application to maximize your chances of acceptance."
   },
   {
     "question": "How much do your services cost?",
-    "answer": "Our fees vary depending on the level of service required. We offer a free initial consultation to discuss your needs and provide a customized quote."
+    "answer": "Our fees vary depending on the services you require. We offer a free initial consultation to understand your goals and provide a personalized quotation."
   },
   {
     "question": "Can you help with scholarships and financial aid?",
-    "answer": "Yes, we help students identify and apply for relevant scholarships and financial aid options to fund their education abroad."
+    "answer": "Yes. We assist students in identifying scholarship opportunities, preparing scholarship applications, and understanding financial aid options available at partner universities."
+  },
+  {
+    "question": "Which countries do you help students study in?",
+    "answer": "We assist students applying to universities in countries such as the United Kingdom, Canada, Australia, the United States, Germany, Ireland, New Zealand, and other popular study destinations."
+  },
+  {
+    "question": "How do I get started?",
+    "answer": "Simply contact us through our website or book a free consultation. Our counselors will assess your academic profile and guide you through the next steps."
+  },
+  {
+    "question": "What documents are required for university applications?",
+    "answer": "Requirements vary by university, but commonly include academic transcripts, passport, personal statement, recommendation letters, CV, and English language proficiency test results."
+  },
+  {
+    "question": "Can you help with student visa applications?",
+    "answer": "Yes. We provide complete visa guidance, including document preparation, application support, interview preparation, and compliance with immigration requirements."
+  },
+  {
+    "question": "Do I need IELTS, TOEFL, or PTE?",
+    "answer": "It depends on the university and country. Many institutions require proof of English proficiency, while some may offer exemptions based on your previous education."
+  },
+  {
+    "question": "How long does the application process take?",
+    "answer": "The timeline varies depending on the university, program, and intake. Generally, students should begin the application process 6–12 months before their intended start date."
+  },
+  {
+    "question": "Can you help after I receive my admission offer?",
+    "answer": "Yes. We assist with offer acceptance, tuition fee guidance, accommodation advice, visa processing, travel planning, and pre-departure orientation."
+  },
+  {
+    "question": "Do you assist with accommodation?",
+    "answer": "Yes. We provide guidance on university accommodation, private housing options, and tips for finding safe and affordable places to live."
+  },
+  {
+    "question": "Can I apply if I have a study gap?",
+    "answer": "Yes. Many universities accept students with study gaps, provided there is a valid explanation and supporting documentation where required."
+  },
+  {
+    "question": "Do you help transfer students?",
+    "answer": "Yes. We assist students who wish to transfer between universities or continue their studies abroad with credit transfer where applicable."
+  },
+  {
+    "question": "Can working professionals apply for higher education through Gradlink?",
+    "answer": "Absolutely. We help professionals apply for postgraduate degrees, MBA programs, executive education, and other career advancement opportunities."
+  },
+  {
+    "question": "Do you provide online consultations?",
+    "answer": "Yes. We offer both in-person and online consultations via video call, making it convenient for students regardless of their location."
+  },
+  {
+    "question": "Will you help me choose the right university?",
+    "answer": "Yes. Our counselors recommend universities based on your academic background, career goals, budget, preferred location, and admission requirements."
+  },
+  {
+    "question": "Can you help if my visa application is refused?",
+    "answer": "Yes. We review the reasons for refusal, advise on possible next steps, and assist with reapplication where appropriate."
+  },
+  {
+    "question": "How can I contact Gradlink?",
+    "answer": "You can contact us through our website's contact form, email, phone, or by visiting our office during business hours."
+  },
+  {
+    "question": "Is the initial consultation free?",
+    "answer": "Yes. We offer a free initial consultation to discuss your study goals, assess your profile, and recommend suitable education pathways."
   }
 ]

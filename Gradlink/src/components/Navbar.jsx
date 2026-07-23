@@ -4,6 +4,8 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import clsx from 'clsx';
 import logo from '../utils/logo.png';
+import logoDark from '../utils/dark-logo.png';
+
 
 const NAV_LINKS = [
   { name: 'Home', path: '/' },
@@ -66,7 +68,7 @@ const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src={logo}
+                src={theme === 'dark' ? logoDark : logo}
                 alt="Gradlink Logo"
                 className="h-9 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
               />

@@ -76,7 +76,7 @@ const Home = () => {
               { icon: Globe, count: '50+', label: 'Partner Universities' },
               { icon: Users, count: '10k+', label: 'Students Placed' },
               { icon: Award, count: '99%', label: 'Visa Success Rate' },
-              { icon: BookOpen, count: '15+', label: 'Years Experience' },
+              { icon: BookOpen, count: '5+', label: 'Years Experience' },
             ].map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }} className="text-center">
                 <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><stat.icon className="w-6 h-6" /></div>

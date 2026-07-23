@@ -8,7 +8,11 @@ import { Mail, Phone, MapPin, Send } from 'lucide-react';
 const contactSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Invalid email address' }),
-  phone: z.string().min(10, { message: 'Phone number is required' }),
+  phone: z
+    .string()
+    .min(10, { message: 'Phone number must be at least 10 digits' })
+    .max(14, { message: 'Phone number must not exceed 14 digits' })
+    .regex(/^[0-9]+$/, { message: 'Phone number must contain numbers only' }),
   subject: z.string().min(5, { message: 'Subject is required' }),
   message: z.string().min(10, { message: 'Message must be at least 10 characters' }),
 });
@@ -24,6 +28,23 @@ const Contact = () => {
     console.log(data);
     toast.success('Message sent successfully! We will get back to you soon.');
     reset();
+  };
+
+  // Blocks any non-digit key from being typed into the phone field
+  const handlePhoneKeyDown = (e) => {
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Blocks pasting text that contains anything other than digits
+  const handlePhonePaste = (e) => {
+    const pasted = e.clipboardData.getData('text');
+    if (!/^[0-9]*$/.test(pasted)) {
+      e.preventDefault();
+    }
   };
 
   return (
@@ -64,7 +85,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Our Office</h4>
-                    <p className="text-muted-foreground">123 Education Street, Suite 400<br/>London, UK</p>
+                    <p className="text-muted-foreground">Plaza 88 Block G1 Phase 1 Johar Town<br/>Lahore, Pakistan</p>
                   </div>
                 </div>
 
@@ -74,8 +95,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Call Us</h4>
-                    <p className="text-muted-foreground">+44 20 7946 0958</p>
-                    <p className="text-xs text-muted-foreground mt-1">Mon-Fri from 9am to 6pm</p>
+                    <p className="text-muted-foreground">+92 326 6662001</p>
+                    <p className="text-xs text-muted-foreground mt-1">Mon-Fri from 10am to 6pm</p>
                   </div>
                 </div>
 
@@ -107,7 +128,7 @@ const Contact = () => {
                     id="name"
                     {...register('name')}
                     className={`w-full px-4 py-3 rounded-xl border ${errors.name ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-primary'} bg-background focus:outline-none focus:ring-2 transition-all`}
-                    placeholder="John Doe"
+                    placeholder="Name"
                   />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                 </div>
@@ -118,7 +139,7 @@ const Contact = () => {
                     type="email"
                     {...register('email')}
                     className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-primary'} bg-background focus:outline-none focus:ring-2 transition-all`}
-                    placeholder="john@example.com"
+                    placeholder="sample@example.com"
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                 </div>
@@ -129,9 +150,15 @@ const Contact = () => {
                   <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
                   <input
                     id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={14}
                     {...register('phone')}
+                    onKeyDown={handlePhoneKeyDown}
+                    onPaste={handlePhonePaste}
                     className={`w-full px-4 py-3 rounded-xl border ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-primary'} bg-background focus:outline-none focus:ring-2 transition-all`}
-                    placeholder="+1 234 567 890"
+                    placeholder="e.g. 923211234567"
                   />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                 </div>

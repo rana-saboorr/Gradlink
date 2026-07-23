@@ -35,7 +35,7 @@ const Team = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-            Meet Our Experts
+            Employees at Gradlink
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-lg text-muted-foreground">
             Our team of seasoned professionals is committed to guiding you at every step of your journey.
@@ -53,7 +53,7 @@ const Team = () => {
               onClick={() => setSelectedMember(member)}
               className="glass-card rounded-3xl overflow-hidden group text-center cursor-pointer hover:-translate-y-1.5 transition-all duration-300 hover:shadow-xl hover:border-primary/40 flex flex-col"
             >
-              <div className="aspect-square overflow-hidden relative">
+              <div className="aspect-square overflow-hidden relative rounded-t-xl">
                 <img
                   src={member.image}
                   alt={member.name}
@@ -107,7 +107,7 @@ const Team = () => {
               className="relative w-full max-w-xl max-h-[88vh] flex flex-col glass-card rounded-2xl overflow-hidden z-10 shadow-2xl border border-primary/20"
             >
               {/* Sticky Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 shrink-0 border-b border-border/60 bg-muted/30 backdrop-blur-sm">
+              <div className="flex items-center justify-between px-5 py-3.5 shrink-0 border-b border-border/60 bg-muted/30 backdrop-blur-sm rounded-t-xl">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <img src={selectedMember.image} alt={selectedMember.name}
                     className="w-9 h-9 rounded-full object-cover border border-border shrink-0" />
