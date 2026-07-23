@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Alex Johnson",
+    "university": "University of Oxford",
+    "content": "Gradlink made my dream of studying at Oxford a reality. Their guidance through the complex application process was invaluable.",
+    "rating": 5
+  },
+  {
+    "id": 2,
+    "name": "Maria Garcia",
+    "university": "Harvard University",
+    "content": "The visa assistance and interview prep I received from the Gradlink team was top-notch. Highly recommended!",
+    "rating": 5
+  },
+  {
+    "id": 3,
+    "name": "David Chen",
+    "university": "University of Toronto",
+    "content": "Professional, knowledgeable, and always available to answer my questions. They truly care about their students' success.",
+    "rating": 4
+  }
+]

@@ -1,0 +1,335 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary-base);
+  --color-secondary: var(--color-secondary-base);
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-fg);
+  --color-muted: var(--color-muted-base);
+  --color-muted-foreground: var(--color-muted-fg);
+  --color-card: var(--color-card-base);
+  --color-border: var(--color-border-base);
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+/* ─── LIGHT MODE TOKENS ─────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+    --color-primary-base:   #0891b2; /* Cyan 600 — deeper for better contrast */
+    --color-secondary-base: #d97706; /* Amber 600 — richer gold, not garish */
+    --color-bg:             #f0f4f8; /* Cool neutral page background */
+    --color-fg:             #0f172a; /* Slate 900 — near-black for text */
+    --color-muted-base:     #dde3ec; /* Slate 200 — muted section bg */
+    --color-muted-fg:       #4b5563; /* Gray 600 — readable subtext */
+    --color-card-base:      #ffffff; /* Pure white card */
+    --color-border-base:    #c8d2de; /* Slate 300 — visible but soft border */
+  }
+  .dark {
+    color-scheme: dark;
+    --color-primary-base:   #22d3ee; /* Cyan 400 — bright on dark */
+    --color-secondary-base: #fbbf24; /* Amber 400 — vivid gold on dark */
+    --color-bg:             #06090f; /* Near-black page background */
+    --color-fg:             #f1f5f9; /* Slate 100 — soft white text */
+    --color-muted-base:     #0f172a; /* Slate 900 — muted section bg */
+    --color-muted-fg:       #94a3b8; /* Slate 400 — readable subtext */
+    --color-card-base:      #111827; /* Gray 900 — deep card bg */
+    --color-border-base:    #1e2d3d; /* Custom dark border */
+  }
+}
+
+/* ─── BASE STYLES ────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    border-color: var(--color-border-base);
+    box-sizing: border-box;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: clamp(0.9rem, 0.8vw + 0.6rem, 1.05rem);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-fg);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  h1 { font-size: clamp(2.4rem, 5vw + 0.8rem, 4.5rem); font-weight: 800; }
+  h2 { font-size: clamp(1.8rem, 3.5vw + 0.8rem, 3rem); font-weight: 700; }
+  h3 { font-size: clamp(1.2rem, 2vw + 0.5rem, 1.75rem); font-weight: 600; letter-spacing: -0.01em; }
+
+  ::selection {
+    background: #22d3ee33;
+    color: #0891b2;
+  }
+}
+
+/* ─── UTILITY CLASSES ────────────────────────── */
+@layer utilities {
+
+  /* ── Navbar (glass bar) ── */
+  .glass {
+    background-color: color-mix(in srgb, var(--color-card-base) 88%, transparent);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border-bottom: 1px solid var(--color-border-base);
+    box-shadow: 0 2px 16px rgb(0 0 0 / 0.06);
+    color: var(--color-fg);
+    transition: all 0.3s ease;
+  }
+
+  .dark .glass {
+    background-color: color-mix(in srgb, #111827 92%, transparent);
+    border-bottom-color: #1e2d3d;
+    box-shadow: 0 2px 24px rgb(0 0 0 / 0.45);
+  }
+
+  /* ── Content Cards ── */
+  .glass-card {
+    background-color: var(--color-card-base);
+    border: 1.5px solid var(--color-border-base);
+    border-radius: 1.25rem;
+    position: relative;
+    overflow: visible;
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.04),
+      0 8px 24px rgb(0 0 0 / 0.06);
+    color: var(--color-fg);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .dark .glass-card {
+    background-color: #111827;
+    border-color: #1e2d3d;
+    box-shadow:
+      0 1px 4px rgb(0 0 0 / 0.3),
+      0 12px 32px rgb(0 0 0 / 0.4),
+      inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  /* ── Card: BORDER-ONLY glow on hover — LIGHT MODE ──
+     The card background is untouched. Only the border
+     glows and pulses using box-shadow layers.
+  ── */
+
+  /* No pseudo-element background effects */
+  .glass-card::before,
+  .glass-card::after { content: none; }
+
+  /* Light mode hover — cyan border glow */
+  .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: #0891b2;
+    box-shadow:
+      /* soft lift shadow — no color bleed */
+      0 4px 16px rgb(0 0 0 / 0.08),
+      0 16px 40px rgb(0 0 0 / 0.07),
+      /* border glow — only at edge, 0 spread */
+      0 0 0 1px #0891b2,
+      0 0 12px 1px rgb(8 145 178 / 0.3),
+      /* animated outer ring via keyframe on outline */
+      0 0 0 3px rgb(8 145 178 / 0.12);
+    animation: borderPulseLight 2s ease-in-out infinite;
+  }
+
+  @keyframes borderPulseLight {
+    0%, 100% {
+      box-shadow:
+        0 4px 16px rgb(0 0 0 / 0.08),
+        0 16px 40px rgb(0 0 0 / 0.07),
+        0 0 0 1px #0891b2,
+        0 0 10px 1px rgb(8 145 178 / 0.25),
+        0 0 0 3px rgb(8 145 178 / 0.10);
+    }
+    50% {
+      box-shadow:
+        0 4px 16px rgb(0 0 0 / 0.08),
+        0 16px 40px rgb(0 0 0 / 0.07),
+        0 0 0 1px #0891b2,
+        0 0 18px 3px rgb(8 145 178 / 0.4),
+        0 0 0 4px rgb(8 145 178 / 0.15);
+    }
+  }
+
+  /* Dark mode hover — bright cyan border glow */
+  .dark .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: #22d3ee;
+    animation: borderPulseDark 2s ease-in-out infinite;
+  }
+
+  @keyframes borderPulseDark {
+    0%, 100% {
+      box-shadow:
+        0 4px 20px rgb(0 0 0 / 0.4),
+        0 16px 40px rgb(0 0 0 / 0.5),
+        0 0 0 1px #22d3ee,
+        0 0 12px 1px rgb(34 211 238 / 0.3),
+        0 0 0 3px rgb(34 211 238 / 0.08);
+    }
+    50% {
+      box-shadow:
+        0 4px 20px rgb(0 0 0 / 0.4),
+        0 16px 40px rgb(0 0 0 / 0.5),
+        0 0 0 1px #22d3ee,
+        0 0 20px 4px rgb(34 211 238 / 0.5),
+        0 0 0 5px rgb(34 211 238 / 0.12);
+    }
+  }
+
+  .dark .glass-card:hover {
+    border-color: #22d3ee;
+    box-shadow:
+      0 4px 20px rgb(34 211 238 / 0.2),
+      0 20px 40px rgb(0 0 0 / 0.5);
+  }
+
+  /* ── Blinker keyframe animation ── */
+  @keyframes borderFlow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(8 145 178 / 0.4); }
+    50%       { box-shadow: 0 0 0 6px rgb(8 145 178 / 0); }
+  }
+
+  .dark .glass-card:hover {
+    animation: pulseGlowDark 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlowDark {
+    0%, 100% { box-shadow: 0 4px 20px rgb(34 211 238 / 0.2), 0 20px 40px rgb(0 0 0 / 0.5); }
+    50%       { box-shadow: 0 4px 28px rgb(34 211 238 / 0.4), 0 20px 40px rgb(0 0 0 / 0.5); }
+  }
+
+  /* ─────────────────────────────────────────────
+     PREMIUM BUTTONS
+  ────────────────────────────────────────────── */
+
+  /* Primary Button — LIGHT MODE */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+    color: #ffffff;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgb(8 145 178 / 0.3);
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #0e7490, #0891b2);
+    box-shadow: 0 4px 20px rgb(8 145 178 / 0.5), 0 0 0 3px rgb(8 145 178 / 0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  /* Primary Button — DARK MODE */
+  .dark .btn-primary {
+    background: linear-gradient(135deg, #22d3ee, #06b6d4);
+    color: #0f172a;
+    box-shadow: 0 2px 10px rgb(34 211 238 / 0.3);
+  }
+
+  .dark .btn-primary:hover {
+    background: linear-gradient(135deg, #67e8f9, #22d3ee);
+    box-shadow: 0 4px 24px rgb(34 211 238 / 0.5), 0 0 0 3px rgb(34 211 238 / 0.15);
+    transform: translateY(-1px);
+  }
+
+  /* Outline Button — LIGHT MODE */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: transparent;
+    color: #0891b2;
+    border: 1.5px solid #0891b2;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .btn-outline:hover {
+    background: #0891b2;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgb(8 145 178 / 0.35);
+    transform: translateY(-1px);
+  }
+
+  /* Outline Button — DARK MODE */
+  .dark .btn-outline {
+    color: #22d3ee;
+    border-color: #22d3ee;
+  }
+
+  .dark .btn-outline:hover {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 4px 20px rgb(34 211 238 / 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* ── Gradient Accent Text (like "World-Class") ── */
+  .text-gradient {
+    background: linear-gradient(135deg, #0891b2 0%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .text-gradient {
+    background: linear-gradient(135deg, #22d3ee 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Muted text ── */
+  .text-muted-foreground { color: var(--color-muted-fg); }
+
+  /* ── Section bg ── */
+  .bg-muted\/50 {
+    background-color: color-mix(in srgb, var(--color-muted-base) 50%, transparent);
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-base);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #0891b2; }
+}
