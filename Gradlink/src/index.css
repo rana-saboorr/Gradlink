@@ -19,25 +19,25 @@
 @layer base {
   :root {
     color-scheme: light;
-    --color-primary-base:   #0891b2; /* Cyan 600 — deeper for better contrast */
-    --color-secondary-base: #d97706; /* Amber 600 — richer gold, not garish */
-    --color-bg:             #f0f4f8; /* Cool neutral page background */
-    --color-fg:             #0f172a; /* Slate 900 — near-black for text */
-    --color-muted-base:     #dde3ec; /* Slate 200 — muted section bg */
-    --color-muted-fg:       #4b5563; /* Gray 600 — readable subtext */
-    --color-card-base:      #ffffff; /* Pure white card */
-    --color-border-base:    #c8d2de; /* Slate 300 — visible but soft border */
+    --color-primary-base:   #0891b2;
+    --color-secondary-base: #d97706;
+    --color-bg:             #f0f4f8;
+    --color-fg:             #0f172a;
+    --color-muted-base:     #dde3ec;
+    --color-muted-fg:       #4b5563;
+    --color-card-base:      #ffffff;
+    --color-border-base:    #c8d2de;
   }
   .dark {
     color-scheme: dark;
-    --color-primary-base:   #22d3ee; /* Cyan 400 — bright on dark */
-    --color-secondary-base: #fbbf24; /* Amber 400 — vivid gold on dark */
-    --color-bg:             #06090f; /* Near-black page background */
-    --color-fg:             #f1f5f9; /* Slate 100 — soft white text */
-    --color-muted-base:     #0f172a; /* Slate 900 — muted section bg */
-    --color-muted-fg:       #94a3b8; /* Slate 400 — readable subtext */
-    --color-card-base:      #111827; /* Gray 900 — deep card bg */
-    --color-border-base:    #1e2d3d; /* Custom dark border */
+    --color-primary-base:   #22d3ee;
+    --color-secondary-base: #fbbf24;
+    --color-bg:             #06090f;
+    --color-fg:             #f1f5f9;
+    --color-muted-base:     #0f172a;
+    --color-muted-fg:       #94a3b8;
+    --color-card-base:      #111827;
+    --color-border-base:    #1e2d3d;
   }
 }
 
@@ -56,7 +56,7 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: clamp(0.9rem, 0.8vw + 0.6rem, 1.05rem);
+    font-size: clamp(0.85rem, 0.8vw + 0.5rem, 1.05rem);
     line-height: 1.6;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
@@ -68,9 +68,9 @@
     letter-spacing: -0.02em;
   }
 
-  h1 { font-size: clamp(2.4rem, 5vw + 0.8rem, 4.5rem); font-weight: 800; }
-  h2 { font-size: clamp(1.8rem, 3.5vw + 0.8rem, 3rem); font-weight: 700; }
-  h3 { font-size: clamp(1.2rem, 2vw + 0.5rem, 1.75rem); font-weight: 600; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2rem, 5vw + 0.5rem, 4.5rem); font-weight: 800; }
+  h2 { font-size: clamp(1.5rem, 3.5vw + 0.5rem, 3rem); font-weight: 700; }
+  h3 { font-size: clamp(1.1rem, 2vw + 0.3rem, 1.75rem); font-weight: 600; letter-spacing: -0.01em; }
 
   ::selection {
     background: #22d3ee33;
@@ -80,7 +80,6 @@
 
 /* ─── UTILITY CLASSES ────────────────────────── */
 @layer utilities {
-
   /* ── Navbar (glass bar) ── */
   .glass {
     background-color: color-mix(in srgb, var(--color-card-base) 88%, transparent);
@@ -121,12 +120,6 @@
       inset 0 1px 0 rgb(255 255 255 / 0.04);
   }
 
-  /* ── Card: BORDER-ONLY glow on hover — LIGHT MODE ──
-     The card background is untouched. Only the border
-     glows and pulses using box-shadow layers.
-  ── */
-
-  /* No pseudo-element background effects */
   .glass-card::before,
   .glass-card::after { content: none; }
 
@@ -135,13 +128,10 @@
     transform: translateY(-3px);
     border-color: #0891b2;
     box-shadow:
-      /* soft lift shadow — no color bleed */
       0 4px 16px rgb(0 0 0 / 0.08),
       0 16px 40px rgb(0 0 0 / 0.07),
-      /* border glow — only at edge, 0 spread */
       0 0 0 1px #0891b2,
       0 0 12px 1px rgb(8 145 178 / 0.3),
-      /* animated outer ring via keyframe on outline */
       0 0 0 3px rgb(8 145 178 / 0.12);
     animation: borderPulseLight 2s ease-in-out infinite;
   }
@@ -191,14 +181,6 @@
     }
   }
 
-  .dark .glass-card:hover {
-    border-color: #22d3ee;
-    box-shadow:
-      0 4px 20px rgb(34 211 238 / 0.2),
-      0 20px 40px rgb(0 0 0 / 0.5);
-  }
-
-  /* ── Blinker keyframe animation ── */
   @keyframes borderFlow {
     0%   { background-position: 0% 50%; }
     50%  { background-position: 100% 50%; }
@@ -208,10 +190,6 @@
   @keyframes pulseGlow {
     0%, 100% { box-shadow: 0 0 0 0 rgb(8 145 178 / 0.4); }
     50%       { box-shadow: 0 0 0 6px rgb(8 145 178 / 0); }
-  }
-
-  .dark .glass-card:hover {
-    animation: pulseGlowDark 2s ease-in-out infinite;
   }
 
   @keyframes pulseGlowDark {
@@ -301,7 +279,7 @@
     transform: translateY(-1px);
   }
 
-  /* ── Gradient Accent Text (like "World-Class") ── */
+  /* ── Gradient Accent Text ── */
   .text-gradient {
     background: linear-gradient(135deg, #0891b2 0%, #d97706 100%);
     -webkit-background-clip: text;
@@ -324,6 +302,28 @@
     background-color: color-mix(in srgb, var(--color-muted-base) 50%, transparent);
   }
 
+  /* ── Responsive line clamp ── */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-none {
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    overflow: visible;
+  }
+
   /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -332,4 +332,56 @@
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover { background: #0891b2; }
+
+  /* ── Responsive container overrides ── */
+  @media (max-width: 640px) {
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+  }
+}
+
+
+
+/* Add to your existing CSS */
+
+@layer utilities {
+  /* Fix for z-index stacking context */
+  .relative {
+    isolation: isolate;
+  }
+  
+  /* Mobile sticky fix */
+  @media (max-width: 767px) {
+    .md\:sticky {
+      position: relative !important;
+    }
+  }
+  
+  /* Ensure cards don't overlap */
+  .glass-card {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  /* Fix for mobile card stacking */
+  @media (max-width: 640px) {
+    .glass-card + .glass-card {
+      margin-top: 0;
+    }
+    
+    .flex-col.md\:flex-row {
+      gap: 1rem;
+    }
+  }
 }
