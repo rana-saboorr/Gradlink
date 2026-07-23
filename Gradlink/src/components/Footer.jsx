@@ -98,7 +98,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://www.facebook.com/p/Gradlink-61575052282041/"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Facebook className="w-5 h-5" />
@@ -110,7 +110,7 @@ const Footer = () => {
                 <Twitter className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/gradlink.pk"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Instagram className="w-5 h-5" />
@@ -214,14 +214,14 @@ const Footer = () => {
               <li className="flex gap-3 text-muted-foreground">
                 <MapPin className="w-5 h-5 shrink-0 text-primary" />
                 <span>
-                  123 Education Street, Suite 400
+                  Plaza No. 88, Block G1 Phase 1, Johar Town, 54000
                   <br />
-                  London, UK
+                  Lahore, Pakistan
                 </span>
               </li>
               <li className="flex items-center gap-3 text-muted-foreground">
                 <Phone className="w-5 h-5 shrink-0 text-primary" />
-                <span>+44 20 7946 0958</span>
+                <span>+92 326 6662001</span>
               </li>
               <li className="flex items-center gap-3 text-muted-foreground">
                 <Mail className="w-5 h-5 shrink-0 text-primary" />

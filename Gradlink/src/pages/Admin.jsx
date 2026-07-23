@@ -6,13 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Users, Settings, Briefcase, Bell, Eye, EyeOff, Shield,
-  Trash2, Edit2, Plus, X, CheckCircle, MapPin, Clock, Loader2, Key
+  Trash2, Edit2, Plus, X, CheckCircle, MapPin, Clock, Loader2, Key, Image
 } from 'lucide-react';
 import { loginAdmin, logout, restoreSession, updateAdminCredentials } from '../store/slices/adminAuthSlice';
 import {
   fetchAllData, saveTeamMember, saveAnnouncement,
   saveService, saveJob, deleteItem
 } from '../store/slices/dataSlice';
+import { supabase } from '../utils/supabaseClient';
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const adminTabs = [
@@ -21,6 +22,7 @@ const adminTabs = [
   { id: 'announcements', name: 'Announcements',    icon: Bell },
   { id: 'services',      name: 'Services',         icon: Briefcase },
   { id: 'jobs',          name: 'Job Postings',     icon: Briefcase },
+  { id: 'gallery',       name: 'Gallery',          icon: Image },
   { id: 'settings',      name: 'Account Settings', icon: Key },
 ];
 
@@ -55,14 +57,123 @@ const Admin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const imageFileRef = useRef(null);
 
+  // Gallery state
+  const [gallery, setGallery] = useState([]);
+  const [galleryFile, setGalleryFile] = useState(null);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+
   // Restore session & fetch on mount
   useEffect(() => {
     dispatch(restoreSession());
   }, [dispatch]);
 
   useEffect(() => {
-    if (isAdmin) dispatch(fetchAllData());
+    if (isAdmin) {
+      dispatch(fetchAllData());
+      fetchGallery();
+    }
   }, [isAdmin, dispatch]);
+
+  // ─── Fetch Gallery Images ──────────────────────────────────────────────────
+  const fetchGallery = async () => {
+    const { data, error } = await supabase
+      .from('gallery')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setGallery(data);
+    }
+  };
+
+  // ─── Upload Gallery Image ──────────────────────────────────────────────────
+  const handleGalleryUpload = async () => {
+    if (!galleryFile) {
+      alert("Select image first");
+      return;
+    }
+
+    try {
+      setGalleryLoading(true);
+
+      const fileName = `${Date.now()}-${galleryFile.name}`;
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from('gallery-images')
+        .upload(fileName, galleryFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase
+        .storage
+        .from('gallery-images')
+        .getPublicUrl(fileName);
+
+      const imageUrl = urlData.publicUrl;
+
+      const { error: insertError } = await supabase
+        .from('gallery')
+        .insert([{ image_url: imageUrl }]);
+
+      if (insertError) throw insertError;
+
+      setGalleryFile(null);
+      fetchGallery();
+      alert("Image uploaded successfully");
+
+    } catch (error) {
+      console.log(error);
+      alert(error.message);
+    } finally {
+      setGalleryLoading(false);
+    }
+  };
+
+  // ─── Delete Gallery Image ──────────────────────────────────────────────────
+  const handleDeleteGallery = async (id) => {
+    if (!window.confirm('Delete this image? This cannot be undone.')) return;
+    
+    try {
+      setGalleryLoading(true);
+      
+      // First, get the image URL to delete from storage
+      const { data: imageData } = await supabase
+        .from('gallery')
+        .select('image_url')
+        .eq('id', id)
+        .single();
+      
+      if (imageData) {
+        // Extract filename from URL
+        const urlParts = imageData.image_url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        // Delete from storage
+        await supabase
+          .storage
+          .from('gallery-images')
+          .remove([fileName]);
+      }
+      
+      // Delete from database
+      const { error } = await supabase
+        .from('gallery')
+        .delete()
+        .eq('id', id);
+
+      if (!error) {
+        fetchGallery();
+      } else {
+        alert(error.message);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete image');
+    } finally {
+      setGalleryLoading(false);
+    }
+  };
 
   // ─── Login Form ─────────────────────────────────────────────────────────────
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -267,6 +378,7 @@ const Admin = () => {
                           { label: 'Announcements', count: announcements.length, icon: Bell },
                           { label: 'Services', count: services.length, icon: Settings },
                           { label: 'Job Postings', count: jobs.length, icon: Briefcase },
+                          { label: 'Gallery Images', count: gallery.length, icon: Image },
                         ].map(({ label, count, icon: Icon }) => (
                           <div key={label} className="p-6 bg-muted/50 rounded-xl border border-border text-center">
                             <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
@@ -482,6 +594,149 @@ const Admin = () => {
                                 </div>
                               </div>
                             ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ─── GALLERY ─── */}
+                    {activeTab === 'gallery' && (
+                      <div className="space-y-6">
+                        {/* Upload Section */}
+                        <div className="bg-muted/30 rounded-2xl p-6 border border-border">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="flex-1 w-full">
+                              <label className="block text-sm font-semibold mb-2 text-foreground">
+                                Upload New Image
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => setGalleryFile(e.target.files[0])}
+                                  className="w-full px-4 py-3 rounded-xl border-2 border-dashed border-border bg-background/50 text-foreground focus:outline-none focus:border-primary/50 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                                />
+                                {galleryFile && (
+                                  <div className="mt-2 text-sm text-muted-foreground">
+                                    Selected: <span className="font-medium text-foreground">{galleryFile.name}</span>
+                                    <span className="ml-2">({(galleryFile.size / 1024).toFixed(1)} KB)</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={handleGalleryUpload}
+                              disabled={galleryLoading || !galleryFile}
+                              className="btn-primary whitespace-nowrap min-w-[120px]"
+                            >
+                              {galleryLoading ? (
+                                <>
+                                  <Loader2 className="animate-spin w-4 h-4" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="w-4 h-4" />
+                                  Upload Image
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Upload Tips */}
+                          <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+                              Max size: 10MB
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+                              Supported: JPG, PNG, WebP
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+                              {gallery.length} images in gallery
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Gallery Grid */}
+                        {gallery.length === 0 ? (
+                          <div className="text-center py-16 bg-muted/20 rounded-2xl border border-border">
+                            <Image className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                            <p className="text-muted-foreground font-medium">No images uploaded yet</p>
+                            <p className="text-sm text-muted-foreground/70 mt-1">Upload your first image to start the gallery</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {gallery.map((img) => (
+                              <div
+                                key={img.id}
+                                className="group relative rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
+                              >
+                                {/* Image */}
+                                <div className="aspect-square overflow-hidden bg-muted/20">
+                                  <img
+                                    src={img.image_url}
+                                    alt="Gallery"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    loading="lazy"
+                                  />
+                                </div>
+
+                                {/* Overlay on Hover */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <div className="absolute bottom-3 left-3 right-3">
+                                    <p className="text-white text-xs font-medium truncate">
+                                      {new Date(img.created_at).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Delete Button */}
+                                <button
+                                  onClick={() => handleDeleteGallery(img.id)}
+                                  className="absolute top-2 right-2 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 backdrop-blur-sm"
+                                  title="Delete image"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+
+                                {/* Image Counter Badge */}
+                                <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg text-white text-xs font-medium">
+                                  #{gallery.indexOf(img) + 1}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Gallery Stats */}
+                        {gallery.length > 0 && (
+                          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border">
+                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                <span className="font-medium text-foreground">{gallery.length}</span> images
+                              </span>
+                              <span className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span>Storage: {(gallery.length * 0.5).toFixed(1)} MB used</span>
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (window.confirm('Delete all gallery images? This cannot be undone.')) {
+                                  gallery.forEach(img => handleDeleteGallery(img.id));
+                                }
+                              }}
+                              className="text-xs text-red-500 hover:text-red-600 font-medium transition hover:underline"
+                            >
+                              Delete All
+                            </button>
                           </div>
                         )}
                       </div>
