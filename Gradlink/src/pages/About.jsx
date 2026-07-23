@@ -20,7 +20,7 @@ const About = () => {
             transition={{ delay: 0.1 }}
             className="text-lg text-muted-foreground"
           >
-            We are dedicated to bridging the gap between ambitious students and world-class educational institutions.
+            Gradlink is a trusted and fast growing international student recruitment consultancy based in Johar Town, Lahore. We specialise in providing professional guidance and admission support to students aiming to pursue higher education in top universities across the UK, Australia, USA, Ireland, and Europe. Our mission is to empower students to achieve their academic and career goals through personalised consulting and ongoing support.
           </motion.p>
         </div>
 
