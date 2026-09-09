@@ -2,7 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, FileText, Briefcase, ChevronRight, X, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../utils/firebaseClient';
 
 const iconMap = { GraduationCap: BookOpen, Passport: FileText, Briefcase: Briefcase };
 
@@ -14,11 +15,16 @@ const Services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: true });
-        if (error) throw error;
-        if (data) setServicesData(data);
+        try {
+          const q = query(collection(db, 'services'), orderBy('created_at', 'asc'));
+          const snap = await getDocs(q);
+          setServicesData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch {
+          const snap = await getDocs(collection(db, 'services'));
+          setServicesData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        }
       } catch (err) {
-        console.error('Error fetching services from Supabase:', err);
+        console.error('Error fetching services from Firebase:', err);
       } finally {
         setLoading(false);
       }
