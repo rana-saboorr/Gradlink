@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Globe, Users, Award, BookOpen, Bell, Calendar, CheckCircle, X, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../utils/supabaseClient';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../utils/firebaseClient';
 
 const iconMap = {
   GraduationCap: BookOpen,
@@ -19,10 +20,12 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: annData } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
-        if (annData) setAnnouncements(annData);
-        const { data: srvData } = await supabase.from('services').select('*').order('created_at', { ascending: true });
-        if (srvData) setServicesData(srvData);
+        const [annSnap, srvSnap] = await Promise.all([
+          getDocs(query(collection(db, 'announcements'), orderBy('created_at', 'desc'))).catch(() => getDocs(collection(db, 'announcements'))),
+          getDocs(query(collection(db, 'services'),      orderBy('created_at', 'asc' ))).catch(() => getDocs(collection(db, 'services'))),
+        ]);
+        setAnnouncements(annSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setServicesData(srvSnap.docs.map(d  => ({ id: d.id, ...d.data() })));
       } catch (err) {
         console.error('Error fetching data:', err);
       }

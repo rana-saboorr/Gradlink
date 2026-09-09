@@ -6,14 +6,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Users, Settings, Briefcase, Bell, Eye, EyeOff, Shield,
-  Trash2, Edit2, Plus, X, CheckCircle, MapPin, Clock, Loader2, Key, Image
+  Trash2, Edit2, Plus, X, CheckCircle, MapPin, Clock, Loader2, Key, Image,
+  Newspaper, FileText
 } from 'lucide-react';
 import { loginAdmin, logout, restoreSession, updateAdminCredentials } from '../store/slices/adminAuthSlice';
 import {
   fetchAllData, saveTeamMember, saveAnnouncement,
   saveService, saveJob, deleteItem
 } from '../store/slices/dataSlice';
-import { supabase } from '../utils/supabaseClient';
+import { db, storage } from '../utils/firebaseClient';
+import {
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import toast from 'react-hot-toast';
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const adminTabs = [
@@ -22,6 +28,8 @@ const adminTabs = [
   { id: 'announcements', name: 'Announcements',    icon: Bell },
   { id: 'services',      name: 'Services',         icon: Briefcase },
   { id: 'jobs',          name: 'Job Postings',     icon: Briefcase },
+  { id: 'news',          name: 'News',             icon: Newspaper },
+  { id: 'blogs',         name: 'Blog Posts',       icon: FileText },
   { id: 'gallery',       name: 'Gallery',          icon: Image },
   { id: 'settings',      name: 'Account Settings', icon: Key },
 ];
@@ -52,15 +60,24 @@ const Admin = () => {
   const { isAdmin, admin, loading: authLoading, attempts } = useSelector(s => s.adminAuth);
   const { team, announcements, services, jobs, loading, saving } = useSelector(s => s.data);
 
-  const [activeTab,    setActiveTab]    = useState('dashboard');
-  const [editingItem,  setEditingItem]  = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab,       setActiveTab]       = useState('dashboard');
+  const [editingItem,     setEditingItem]     = useState(null);
+  const [showPassword,    setShowPassword]    = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const imageFileRef = useRef(null);
 
   // Gallery state
   const [gallery, setGallery] = useState([]);
   const [galleryFile, setGalleryFile] = useState(null);
   const [galleryLoading, setGalleryLoading] = useState(false);
+
+  // News state
+  const [newsItems, setNewsItems]   = useState([]);
+  const [newsSaving, setNewsSaving] = useState(false);
+
+  // Blogs state
+  const [blogPosts, setBlogPosts]   = useState([]);
+  const [blogSaving, setBlogSaving] = useState(false);
 
   // Restore session & fetch on mount
   useEffect(() => {
@@ -71,60 +88,157 @@ const Admin = () => {
     if (isAdmin) {
       dispatch(fetchAllData());
       fetchGallery();
+      fetchNews();
+      fetchBlogs();
     }
   }, [isAdmin, dispatch]);
 
+  // ─── Fetch News ─────────────────────────────────────────────────────
+  const fetchNews = async () => {
+    try {
+      const q    = query(collection(db, 'news'), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      setNewsItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      const snap = await getDocs(collection(db, 'news'));
+      setNewsItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }
+  };
+
+  // ─── Fetch Blogs ─────────────────────────────────────────────────────
+  const fetchBlogs = async () => {
+    try {
+      const q    = query(collection(db, 'blogs'), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      setBlogPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      const snap = await getDocs(collection(db, 'blogs'));
+      setBlogPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }
+  };
+
+  // ─── Save / Delete News ─────────────────────────────────────────────
+  const handleSaveNews = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = {
+      title:    fd.get('title'),
+      summary:  fd.get('summary'),
+      content:  fd.get('content'),
+      category: fd.get('category'),
+      image:    fd.get('image'),
+    };
+    try {
+      setNewsSaving(true);
+      if (editingItem?.id) {
+        await updateDoc(doc(db, 'news', editingItem.id), data);
+      } else {
+        await addDoc(collection(db, 'news'), { ...data, created_at: new Date().toISOString() });
+      }
+      toast.success('News article saved!');
+      setEditingItem(null);
+      fetchNews();
+    } catch (err) {
+      toast.error(err.message || 'Failed to save news.');
+    } finally {
+      setNewsSaving(false);
+    }
+  };
+
+  const handleDeleteNews = (id) => {
+    toast((t) => (
+      <span className="flex items-center gap-3">
+        <span className="text-sm">Delete this article?</span>
+        <button onClick={async () => { await deleteDoc(doc(db, 'news', id)); fetchNews(); toast.dismiss(t.id); toast.success('Deleted.'); }}
+          className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg font-semibold hover:bg-red-600">Delete</button>
+        <button onClick={() => toast.dismiss(t.id)}
+          className="px-2 py-1 bg-muted text-foreground text-xs rounded-lg font-semibold">Cancel</button>
+      </span>
+    ), { duration: 6000 });
+  };
+
+  // ─── Save / Delete Blogs ─────────────────────────────────────────────
+  const handleSaveBlog = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const tagsRaw = fd.get('tags') || '';
+    const data = {
+      title:        fd.get('title'),
+      excerpt:      fd.get('excerpt'),
+      content:      fd.get('content'),
+      author:       fd.get('author'),
+      cover_image:  fd.get('cover_image'),
+      tags:         tagsRaw.split(',').map(t => t.trim()).filter(Boolean),
+    };
+    try {
+      setBlogSaving(true);
+      if (editingItem?.id) {
+        await updateDoc(doc(db, 'blogs', editingItem.id), data);
+      } else {
+        await addDoc(collection(db, 'blogs'), { ...data, created_at: new Date().toISOString() });
+      }
+      toast.success('Blog post saved!');
+      setEditingItem(null);
+      fetchBlogs();
+    } catch (err) {
+      toast.error(err.message || 'Failed to save blog post.');
+    } finally {
+      setBlogSaving(false);
+    }
+  };
+
+  const handleDeleteBlog = (id) => {
+    toast((t) => (
+      <span className="flex items-center gap-3">
+        <span className="text-sm">Delete this blog post?</span>
+        <button onClick={async () => { await deleteDoc(doc(db, 'blogs', id)); fetchBlogs(); toast.dismiss(t.id); toast.success('Deleted.'); }}
+          className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg font-semibold hover:bg-red-600">Delete</button>
+        <button onClick={() => toast.dismiss(t.id)}
+          className="px-2 py-1 bg-muted text-foreground text-xs rounded-lg font-semibold">Cancel</button>
+      </span>
+    ), { duration: 6000 });
+  };
+
   // ─── Fetch Gallery Images ──────────────────────────────────────────────────
   const fetchGallery = async () => {
-    const { data, error } = await supabase
-      .from('gallery')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      setGallery(data);
+    try {
+      const q    = query(collection(db, 'gallery'), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      setGallery(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      // Fallback without ordering if index not ready
+      const snap = await getDocs(collection(db, 'gallery'));
+      setGallery(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }
   };
 
   // ─── Upload Gallery Image ──────────────────────────────────────────────────
   const handleGalleryUpload = async () => {
     if (!galleryFile) {
-      alert("Select image first");
+      toast.error('Select an image first');
       return;
     }
 
     try {
       setGalleryLoading(true);
 
-      const fileName = `${Date.now()}-${galleryFile.name}`;
+      const fileName    = `gallery-images/${Date.now()}-${galleryFile.name}`;
+      const storageRef  = ref(storage, fileName);
+      await uploadBytes(storageRef, galleryFile);
+      const imageUrl = await getDownloadURL(storageRef);
 
-      const { error: uploadError } = await supabase
-        .storage
-        .from('gallery-images')
-        .upload(fileName, galleryFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase
-        .storage
-        .from('gallery-images')
-        .getPublicUrl(fileName);
-
-      const imageUrl = urlData.publicUrl;
-
-      const { error: insertError } = await supabase
-        .from('gallery')
-        .insert([{ image_url: imageUrl }]);
-
-      if (insertError) throw insertError;
+      await addDoc(collection(db, 'gallery'), {
+        image_url:   imageUrl,
+        storage_path: fileName,
+        created_at:  new Date().toISOString(),
+      });
 
       setGalleryFile(null);
       fetchGallery();
-      alert("Image uploaded successfully");
-
+      toast.success('Image uploaded successfully!');
     } catch (error) {
-      console.log(error);
-      alert(error.message);
+      console.error(error);
+      toast.error(error.message || 'Upload failed');
     } finally {
       setGalleryLoading(false);
     }
@@ -132,40 +246,31 @@ const Admin = () => {
 
   // ─── Delete Gallery Image ──────────────────────────────────────────────────
   const handleDeleteGallery = async (id) => {
-    if (!window.confirm('Delete this image? This cannot be undone.')) return;
-    
     try {
       setGalleryLoading(true);
-      
-      const { data: imageData } = await supabase
-        .from('gallery')
-        .select('image_url')
-        .eq('id', id)
-        .single();
-      
-      if (imageData) {
-        const urlParts = imageData.image_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        
-        await supabase
-          .storage
-          .from('gallery-images')
-          .remove([fileName]);
-      }
-      
-      const { error } = await supabase
-        .from('gallery')
-        .delete()
-        .eq('id', id);
 
-      if (!error) {
-        fetchGallery();
-      } else {
-        alert(error.message);
+      // Find the document to get storage_path
+      const snap      = await getDocs(collection(db, 'gallery'));
+      const imageDoc  = snap.docs.find(d => d.id === id);
+
+      if (imageDoc) {
+        const { storage_path, image_url } = imageDoc.data();
+        // Try to delete from Storage (best effort — won't block if path missing)
+        try {
+          const storagePath = storage_path || (
+            // fallback: parse path from URL for old records
+            decodeURIComponent(image_url.split('/o/')[1]?.split('?')[0] || '')
+          );
+          if (storagePath) await deleteObject(ref(storage, storagePath));
+        } catch { /* ignore storage errors — file may not exist */ }
       }
+
+      await deleteDoc(doc(db, 'gallery', id));
+      toast.success('Image deleted.');
+      fetchGallery();
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete image');
+      toast.error('Failed to delete image');
     } finally {
       setGalleryLoading(false);
     }
@@ -180,8 +285,19 @@ const Admin = () => {
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handleDelete = (table, id) => {
-    if (!window.confirm('Delete this item? This cannot be undone.')) return;
-    dispatch(deleteItem({ table, id }));
+    toast((t) => (
+      <span className="flex items-center gap-3">
+        <span className="text-sm">Delete this item?</span>
+        <button
+          onClick={() => { dispatch(deleteItem({ table, id })); toast.dismiss(t.id); }}
+          className="px-2 py-1 bg-red-500 text-white text-xs rounded-lg font-semibold hover:bg-red-600"
+        >Delete</button>
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="px-2 py-1 bg-muted text-foreground text-xs rounded-lg font-semibold"
+        >Cancel</button>
+      </span>
+    ), { duration: 6000 });
   };
 
   const handleSaveTeam = async (e) => {
@@ -362,7 +478,7 @@ const Admin = () => {
 
                 {loading ? (
                   <div className="flex items-center justify-center py-12 sm:py-20 gap-3 text-muted-foreground">
-                    <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> Loading data from Supabase...
+                    <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> Loading data from Firebase...
                   </div>
                 ) : (
                   <>
@@ -370,11 +486,13 @@ const Admin = () => {
                     {activeTab === 'dashboard' && (
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {[
-                          { label: 'Team Members', count: team.length, icon: Users },
+                          { label: 'Team Members',  count: team.length,          icon: Users },
                           { label: 'Announcements', count: announcements.length, icon: Bell },
-                          { label: 'Services', count: services.length, icon: Settings },
-                          { label: 'Job Postings', count: jobs.length, icon: Briefcase },
-                          { label: 'Gallery Images', count: gallery.length, icon: Image },
+                          { label: 'Services',      count: services.length,      icon: Settings },
+                          { label: 'Job Postings',  count: jobs.length,          icon: Briefcase },
+                          { label: 'News Articles', count: newsItems.length,     icon: Newspaper },
+                          { label: 'Blog Posts',    count: blogPosts.length,     icon: FileText },
+                          { label: 'Gallery Images',count: gallery.length,       icon: Image },
                         ].map(({ label, count, icon: Icon }) => (
                           <div key={label} className="p-3 sm:p-4 md:p-6 bg-muted/50 rounded-lg sm:rounded-xl border border-border text-center">
                             <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary mx-auto mb-1.5 sm:mb-2" />
@@ -603,6 +721,111 @@ const Admin = () => {
                       </div>
                     )}
 
+                    {/* ─── NEWS ─── */}
+                    {activeTab === 'news' && (
+                      <div>
+                        {editingItem ? (
+                          <form onSubmit={handleSaveNews} className="space-y-4 max-w-xl">
+                            <Field label="Title">
+                              <input name="title" defaultValue={editingItem.title} required className={inputCls} placeholder="e.g. New Scholarship Opportunities for 2027" />
+                            </Field>
+                            <Field label="Category" hint="e.g. admissions, scholarship, visa, event, announcement">
+                              <input name="category" defaultValue={editingItem.category || 'announcement'} className={inputCls} placeholder="announcement" />
+                            </Field>
+                            <Field label="Summary" hint="A brief one-line summary shown on the news card.">
+                              <input name="summary" defaultValue={editingItem.summary} className={inputCls} placeholder="Short summary for the card..." />
+                            </Field>
+                            <Field label="Full Content">
+                              <textarea name="content" defaultValue={editingItem.content} required rows={6} className={inputCls} placeholder="Full article content..." />
+                            </Field>
+                            <Field label="Cover Image URL" hint="Optional. Paste a direct image URL.">
+                              <input name="image" defaultValue={editingItem.image} className={inputCls} placeholder="https://..." />
+                            </Field>
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                              <button type="submit" disabled={newsSaving} className={btnPrimary}>
+                                {newsSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><CheckCircle className="w-4 h-4" /> Save Article</>}
+                              </button>
+                              <button type="button" onClick={() => setEditingItem(null)} disabled={newsSaving} className={btnOutline}><X className="w-4 h-4" /> Cancel</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="space-y-3">
+                            {newsItems.length === 0 && <p className="text-muted-foreground py-8 text-center">No news articles yet. Add one!</p>}
+                            {newsItems.map(article => (
+                              <div key={article.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl border border-border bg-muted/30 hover:border-primary/30 transition">
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                  <Newspaper className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+                                  <div className="flex-grow min-w-0">
+                                    <p className="font-semibold text-sm sm:text-base truncate">{article.title}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">Category: {article.category} · {new Date(article.created_at).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 shrink-0 w-full sm:w-auto justify-end sm:justify-start">
+                                  <button onClick={() => setEditingItem(article)} className="p-1.5 sm:p-2 text-primary hover:bg-primary/10 rounded-lg transition"><Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                                  <button onClick={() => handleDeleteNews(article.id)} className="p-1.5 sm:p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition"><Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ─── BLOGS ─── */}
+                    {activeTab === 'blogs' && (
+                      <div>
+                        {editingItem ? (
+                          <form onSubmit={handleSaveBlog} className="space-y-4 max-w-xl">
+                            <Field label="Blog Title">
+                              <input name="title" defaultValue={editingItem.title} required className={inputCls} placeholder="e.g. How to Choose the Right University Abroad" />
+                            </Field>
+                            <Field label="Author">
+                              <input name="author" defaultValue={editingItem.author} className={inputCls} placeholder="e.g. Sarah Johnson" />
+                            </Field>
+                            <Field label="Excerpt" hint="A brief hook shown on the blog card.">
+                              <input name="excerpt" defaultValue={editingItem.excerpt} className={inputCls} placeholder="What makes this post compelling..." />
+                            </Field>
+                            <Field label="Full Content">
+                              <textarea name="content" defaultValue={editingItem.content} required rows={8} className={inputCls} placeholder="Full blog post content..." />
+                            </Field>
+                            <Field label="Tags" hint="Comma-separated. e.g. tips, visa, scholarships">
+                              <input name="tags" defaultValue={Array.isArray(editingItem.tags) ? editingItem.tags.join(', ') : editingItem.tags} className={inputCls} placeholder="tips, admissions, study-abroad" />
+                            </Field>
+                            <Field label="Cover Image URL" hint="Optional. Paste a direct image URL.">
+                              <input name="cover_image" defaultValue={editingItem.cover_image} className={inputCls} placeholder="https://..." />
+                            </Field>
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                              <button type="submit" disabled={blogSaving} className={btnPrimary}>
+                                {blogSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><CheckCircle className="w-4 h-4" /> Save Post</>}
+                              </button>
+                              <button type="button" onClick={() => setEditingItem(null)} disabled={blogSaving} className={btnOutline}><X className="w-4 h-4" /> Cancel</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="space-y-3">
+                            {blogPosts.length === 0 && <p className="text-muted-foreground py-8 text-center">No blog posts yet. Add one!</p>}
+                            {blogPosts.map(post => (
+                              <div key={post.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl border border-border bg-muted/30 hover:border-primary/30 transition">
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-secondary shrink-0" />
+                                  <div className="flex-grow min-w-0">
+                                    <p className="font-semibold text-sm sm:text-base truncate">{post.title}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                      By {post.author || 'Unknown'} · {post.tags?.join(', ')} · {new Date(post.created_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 shrink-0 w-full sm:w-auto justify-end sm:justify-start">
+                                  <button onClick={() => setEditingItem(post)} className="p-1.5 sm:p-2 text-primary hover:bg-primary/10 rounded-lg transition"><Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                                  <button onClick={() => handleDeleteBlog(post.id)} className="p-1.5 sm:p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition"><Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* ─── GALLERY ─── */}
                     {activeTab === 'gallery' && (
                       <div className="space-y-4 sm:space-y-6">
@@ -731,16 +954,26 @@ const Admin = () => {
                                 <span>Storage: {(gallery.length * 0.5).toFixed(1)} MB used</span>
                               </span>
                             </div>
-                            <button
-                              onClick={() => {
-                                if (window.confirm('Delete all gallery images? This cannot be undone.')) {
-                                  gallery.forEach(img => handleDeleteGallery(img.id));
-                                }
-                              }}
-                              className="text-xs sm:text-sm text-red-500 hover:text-red-600 font-medium transition hover:underline"
-                            >
-                              Delete All
-                            </button>
+                            {confirmDeleteAll ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-red-500 font-medium">Are you sure?</span>
+                                <button
+                                  onClick={() => { gallery.forEach(img => handleDeleteGallery(img.id)); setConfirmDeleteAll(false); }}
+                                  className="px-3 py-1 bg-red-500 text-white text-xs rounded-lg font-semibold hover:bg-red-600 transition"
+                                >Yes, delete all</button>
+                                <button
+                                  onClick={() => setConfirmDeleteAll(false)}
+                                  className="px-3 py-1 bg-muted text-foreground text-xs rounded-lg font-semibold transition"
+                                >Cancel</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteAll(true)}
+                                className="text-xs sm:text-sm text-red-500 hover:text-red-600 font-medium transition hover:underline"
+                              >
+                                Delete All
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -751,7 +984,7 @@ const Admin = () => {
                       <div className="max-w-xl">
                         <h4 className="text-base sm:text-lg font-bold mb-2">Change Admin Credentials</h4>
                         <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
-                          Update your admin username, email, or password stored in Supabase.
+                          Update your admin username, email, or password stored in Firebase.
                         </p>
                         <form onSubmit={handleUpdateAdminSettings} className="space-y-4">
                           <Field label="Username">
