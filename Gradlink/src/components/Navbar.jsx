@@ -8,28 +8,28 @@ import logoDark from '../utils/dark-logo.png';
 
 
 const NAV_LINKS = [
-  { name: 'Home', path: '/' },
-  { name: 'About', path: '/about' },
-  { name: 'Services', path: '/services' },
+  { name: 'Home',         path: '/' },
+  { name: 'About',        path: '/about' },
+  { name: 'Services',     path: '/services' },
   { name: 'Destinations', path: '/destinations' },
   { name: 'Universities', path: '/universities' },
-  { name: 'Team', path: '/team' },
+  { name: 'Team',         path: '/team' },
 ];
 
 const MORE_LINKS = [
   { name: 'Careers', path: '/careers' },
   { name: 'Gallery', path: '/gallery' },
-  { name: 'FAQs', path: '/faqs' },
-  { name: 'News', path: '/news' },
+  { name: 'FAQs',    path: '/faqs' },
+  { name: 'News',    path: '/news' },
 ];
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const location = useLocation();
-  const { theme, toggleTheme } = useTheme();
-  const moreRef = useRef(null);
+  const [isOpen,    setIsOpen]    = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+  const [moreOpen,  setMoreOpen]  = useState(false);
+  const location                  = useLocation();
+  const { theme, toggleTheme }    = useTheme();
+  const moreRef                   = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -75,10 +75,7 @@ const Navbar = () => {
               <span className="text-xl font-extrabold tracking-tight text-gradient">Gradlink</span>
             </Link>
 
-            {/* Desktop Nav — swaps content entirely when "More" is open.
-                moreRef wraps whichever state is showing, so outside
-                clicks correctly close the expanded state. Same gap/height
-                classes in both states, so the navbar itself never resizes. */}
+            {/* Desktop Nav */}
             <div className="hidden lg:flex items-center gap-6" ref={moreRef}>
               {!moreOpen ? (
                 <>
@@ -115,9 +112,6 @@ const Navbar = () => {
                     </button>
                     <Link to="/contact" className="btn-primary">
                       Contact Us
-                    </Link>
-                    <Link to="/admin" className="btn-outline text-xs px-3 py-2">
-                      Admin
                     </Link>
                   </div>
                 </>
@@ -193,9 +187,6 @@ const Navbar = () => {
             <div className="px-6 pt-4 pb-4 flex flex-col gap-3 border-t border-border mt-2">
               <Link to="/contact" className="btn-primary text-center">
                 Contact Us
-              </Link>
-              <Link to="/admin" className="btn-outline text-center text-sm">
-                Admin Portal
               </Link>
             </div>
           </div>

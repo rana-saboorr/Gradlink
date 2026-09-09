@@ -3,6 +3,8 @@
 .env.local
 .env.*.local
 *.env
+*.env.*
+!.env.example
 
 # Dependencies
 node_modules
@@ -36,3 +38,5 @@ lerna-debug.log*
 # Temporary files
 *.tmp
 *.bak
+Thumbs.db
+[Dd]esktop.ini

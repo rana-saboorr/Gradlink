@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Clock, ArrowRight, Building2, Loader2, Briefcase, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../utils/supabaseClient';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../utils/firebaseClient';
 
 const Careers = () => {
   const [jobs, setJobs] = useState([]);
@@ -12,12 +13,14 @@ const Careers = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const { data, error } = await supabase
-          .from('jobs')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        if (data) setJobs(data);
+        try {
+          const q = query(collection(db, 'jobs'), orderBy('created_at', 'desc'));
+          const snap = await getDocs(q);
+          setJobs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch {
+          const snap = await getDocs(collection(db, 'jobs'));
+          setJobs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        }
       } catch (err) {
         console.error('Error fetching jobs:', err);
       } finally {
